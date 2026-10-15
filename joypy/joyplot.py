@@ -1,3 +1,4 @@
+import itertools
 import numpy as np
 from scipy.stats import gaussian_kde
 import scipy.stats as stats
@@ -436,6 +437,8 @@ def _joyplot(data,
                           sharex=True, sharey=False, figsize=figsize,
                           layout_type='vertical')
     _axes = _flatten(axes)
+    _axes_a, _axes_b = itertools.tee(_axes)
+    _axes_list = list(_axes_a)
 
     # The legend must be drawn in the last axis if we want it at the bottom.
     if loc in (3, 4, 8) or 'lower' in str(loc):
@@ -455,7 +458,7 @@ def _joyplot(data,
 
     for i, group in enumerate(data):
 
-        a = _axes[i]
+        a = _axes_list[i]
         group_zorder = i
         if fade:
             kwargs['alpha'] = _get_alpha(i, num_axes)
@@ -522,9 +525,9 @@ def _joyplot(data,
     # different options are available.
     if ylim == 'max':
         # Set all yaxis limit to the same value (max range among all)
-        max_ylim = max(a.get_ylim()[1] for a in _axes)
-        min_ylim = min(a.get_ylim()[0] for a in _axes)
-        for a in _axes:
+        max_ylim = max(a.get_ylim()[1] for a in _axes_list)
+        min_ylim = min(a.get_ylim()[0] for a in _axes_list)
+        for a in _axes_list:
             a.set_ylim([min_ylim - 0.1*(max_ylim-min_ylim), max_ylim])
 
     elif ylim == 'own':
@@ -534,7 +537,7 @@ def _joyplot(data,
     else:
         # Set all yaxis lim to the argument value ylim
         try:
-            for a in _axes:
+            for a in _axes_list:
                 a.set_ylim(ylim)
         except:
             print("Warning: the value of ylim must be either 'max', 'own', or a tuple of length 2. The value you provided has no effect.")
@@ -551,9 +554,9 @@ def _joyplot(data,
 
     # This looks hacky, but all the axes share the x-axis,
     # so they have the same lims and ticks
-    last_axis.set_xlim(_axes[0].get_xlim())
+    last_axis.set_xlim(_axes_list[0].get_xlim())
     if xlabels is True:
-        last_axis.set_xticks(np.array(_axes[0].get_xticks()[1:-1]))
+        last_axis.set_xticks(np.array(_axes_list[0].get_xticks()[1:-1]))
         for t in last_axis.get_xticklabels():
             t.set_visible(True)
             t.set_fontsize(xlabelsize)
@@ -570,8 +573,8 @@ def _joyplot(data,
 
 
     # Last axis on the back
-    last_axis.zorder = min(a.zorder for a in _axes) - 1
-    _axes = list(_axes) + [last_axis]
+    last_axis.zorder = min(a.zorder for a in _axes_list) - 1
+    _axes = list(_axes_list) + [last_axis]
 
     if title is not None:
         plt.title(title)
